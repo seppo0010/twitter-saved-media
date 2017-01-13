@@ -1,0 +1,34 @@
+{
+   "name" : "Twitter Saved Media",
+   "web_accessible_resources" : [
+      "events.js",
+      "images/*"
+   ],
+   "description" : "Save your uploaded media to Twitter for later usage",
+   "manifest_version" : 2,
+   "background" : {
+      "scripts" : [
+         "bg.js"
+      ]
+   },
+   "content_scripts" : [
+      {
+         "matches" : [
+            "https://twitter.com/*"
+         ],
+         "js" : [
+            "hook.js"
+         ],
+         "css" : []
+      }
+   ],
+   "browser_action" : {
+      "default_icon" : "icon.png"
+   },
+   "externally_connectable" : {
+      "matches" : [
+         "https://twitter.com/*"
+      ]
+   },
+   "version" : "1.0"
+}
