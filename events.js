@@ -6,6 +6,16 @@ chrome.runtime.sendMessage(extensionId, {}, function(response) {
 });
 
 
+using("app/utils/file", function (file) {
+    let f = file.getFileInfo;
+    file.getFileInfo = function(a, b, c) {
+        if (c.sourceUrl.indexOf('chrome-extension') === 0) {
+            delete c.sourceUrl;
+        }
+        return f.call(this, a, b, c);
+    };
+});
+
 $(document).on('dataFoundMediaSearchResults', '.FoundMediaSearch', function(e) {
     var html = '<div class="FoundMediaSearch-itemContainer FoundMediaSearch-focusable FoundMediaSearch-itemContainer--bg5 js-presented FoundMediaSearch-slideIn" style="animation-delay: 0ms;">' +
         '<button type="button" class="FoundMediaSearch-item FoundMediaSearch-item--visible" data-gif-url="{url}" data-thumbnail-url="{url}" data-still-url="{url}" data-provider-name="extension" data-attribution-name="EXTENSION" data-attribution-image="extension" data-details-url="" data-width="{width}" data-height="{height}" data-origin="{&quot;provider&quot;:&quot;ext&quot;,&quot;id&quot;:&quot;1&quot;}" tabindex="-1" style="background-image: url({url})">' +
