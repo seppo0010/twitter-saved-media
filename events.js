@@ -1,4 +1,4 @@
-var extensionId = "lcijpemfldidhhnckoejhbaogdcjjjmp";
+var extensionId = "gnbajjiemcfbjfcbacpfdipbkobjnage";
 
 var images = [];
 chrome.runtime.sendMessage(extensionId, {}, function(response) {
