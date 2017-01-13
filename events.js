@@ -9,7 +9,7 @@ chrome.runtime.sendMessage(extensionId, {}, function(response) {
 using("app/utils/file", function (file) {
     let f = file.getFileInfo;
     file.getFileInfo = function(a, b, c) {
-        if (c.sourceUrl.indexOf('chrome-extension') === 0) {
+        if (c.sourceUrl && c.sourceUrl.indexOf('chrome-extension') === 0) {
             delete c.sourceUrl;
         }
         return f.call(this, a, b, c);
