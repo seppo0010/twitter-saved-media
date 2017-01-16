@@ -8,6 +8,12 @@ var imageStorage = {
         this.defaultImages = images;
     },
 
+    getAll: function(callback) {
+        this.getAllFromDb(function(items) {
+            callback(items.concat(this.defaultImages));
+        }.bind(this));
+    },
+
     search: function(term, callback) {
         this.searchDb(term, function(r) {
             callback(this.defaultImages.filter(function(i) {
@@ -16,17 +22,29 @@ var imageStorage = {
         }.bind(this));
     },
 
+    prepareItem: function(item) {
+        item.url = URL.createObjectURL(item.blob);
+        return item;
+    },
+
+    getAllFromDb: function(callback) {
+        this.getDb(function(db) {
+            var transaction = db.transaction(['twitter-saved-media'], 'readonly');
+            var request = transaction.objectStore("twitter-saved-media").getAll();
+            request.onsuccess = function(event) {
+                callback(event.target.result.map(this.prepareItem.bind(this)));
+            }.bind(this);
+        }.bind(this));
+    },
+
     searchDb: function(term, callback) {
         this.getDb(function(db) {
             var transaction = db.transaction(['twitter-saved-media'], 'readonly');
             var request = transaction.objectStore("twitter-saved-media").index('term').getAll(IDBKeyRange.only(term));
             request.onsuccess = function(event) {
-                callback(event.target.result.map(function(item) {
-                    item.url = URL.createObjectURL(item.blob);
-                    return item;
-                }));
-            };
-        });
+                callback(event.target.result.map(this.prepareItem.bind(this)));
+            }.bind(this);
+        }.bind(this));
     },
 
     getDb: function(callback) {
