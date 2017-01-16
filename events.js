@@ -1,5 +1,7 @@
 var extensionId = "lcijpemfldidhhnckoejhbaogdcjjjmp";
 
+var blobs = {};
+
 var imageStorage = {
     db: null,
     defaultImages: [],
@@ -24,6 +26,7 @@ var imageStorage = {
 
     prepareItem: function(item) {
         item.url = URL.createObjectURL(item.blob);
+        blobs[item.url] = item.blob;
         return item;
     },
 
@@ -95,15 +98,25 @@ chrome.runtime.sendMessage(extensionId, {}, function(response) {
 });
 
 using("app/utils/file", function (file) {
-    let f = file.getFileInfo;
+    let getFileInfo = file.getFileInfo;
     file.getFileInfo = function(a, b, c) {
         if (c.sourceUrl && c.sourceUrl.indexOf('chrome-extension') === 0) {
             delete c.sourceUrl;
         }
-        return f.call(this, a, b, c);
+        return getFileInfo.call(this, a, b, c);
+    };
+
+    let fetchAsBlob = file.fetchAsBlob;
+    file.fetchAsBlob = function(url) {
+        if (blobs[url]) {
+            var p = $.Deferred();
+            p.resolve(blobs[url]);
+            return p;
+        } else {
+            fetchAsBlob.call(this, url);
+        }
     };
 });
-
 
 $(document).on('uiMediaEditDialogDone', '#media-edit-dialog', function(e, f) {
     using("app/utils/shared_objects", function(sharedObjects) {
