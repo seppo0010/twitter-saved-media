@@ -38,6 +38,14 @@ var imageStorage = {
     },
 
     searchDb: function(term, callback) {
+        if (term === '#myimages') {
+            this.getAllFromDb(callback);
+            return;
+        };
+        if (term[0] !== '#') {
+            callback([]);
+            return;
+        }
         this.getDb(function(db) {
             var transaction = db.transaction(['twitter-saved-media'], 'readonly');
             var request = transaction.objectStore("twitter-saved-media").index('term').getAll(IDBKeyRange.only(term));
@@ -100,11 +108,15 @@ using("app/utils/file", function (file) {
 $(document).on('uiMediaEditDialogDone', '#media-edit-dialog', function(e, f) {
     using("app/utils/shared_objects", function(sharedObjects) {
         var file = sharedObjects.get(f.fileId);
-        imageStorage.saveImage(file.fileHandle, file.altText, file.thumbnail.width, file.thumbnail.height);
+        file.altText.split(' ').forEach(function(t) {
+            if (t[0] === '#') {
+                imageStorage.saveImage(file.fileHandle, t, file.thumbnail.width, file.thumbnail.height);
+            }
+        });
     });
 });
 
-$(document).on('dataFoundMediaSearchResults', '.FoundMediaSearch', function(e) {
+$(document).on('dataFoundMediaSearchResults dataFoundMediaCategoryItems', '.FoundMediaSearch', function(e) {
     var html = '<div class="FoundMediaSearch-itemContainer FoundMediaSearch-focusable FoundMediaSearch-itemContainer--bg5 js-presented FoundMediaSearch-slideIn" style="animation-delay: 0ms;">' +
         '<button type="button" class="FoundMediaSearch-item FoundMediaSearch-item--visible" data-gif-url="{url}" data-thumbnail-url="{url}" data-still-url="{url}" data-provider-name="extension" data-attribution-name="EXTENSION" data-attribution-image="extension" data-details-url="" data-width="{width}" data-height="{height}" data-origin="{&quot;provider&quot;:&quot;ext&quot;,&quot;id&quot;:&quot;1&quot;}" tabindex="-1" style="background-image: url({url})">' +
             '<div class="FlexEmbed u-borderRadiusInherit" style="padding-bottom: {ratio};">' +
@@ -129,4 +141,17 @@ $(document).on('dataFoundMediaSearchResults', '.FoundMediaSearch', function(e) {
             );
         });
     });
+});
+
+$(document).on('dataFoundMediaCategories', '.FoundMediaSearch', function(e) {
+    var html = '<div class="FoundMediaSearch-categoryContainer FoundMediaSearch-focusable FoundMediaSearch-itemContainer--bg6 js-presented FoundMediaSearch-slideIn">' +
+    '<button type="button" class="FoundMediaSearch-category" data-name="#myimages" data-display-name="#myimages" tabindex="-1">' +
+    '<div class="FlexEmbed u-borderRadiusInherit" style="padding-bottom: 50%">' +
+    '<div class="FlexEmbed-item u-borderRadiusInherit">' +
+    '<div class="FoundMediaSearch-categoryName">My Images</div>' +
+    '</div>' +
+    '</div>' +
+    '</button>' +
+    '</div>'
+    $(e.currentTarget).find('.FoundMediaSearch-items').prepend(html);
 });
