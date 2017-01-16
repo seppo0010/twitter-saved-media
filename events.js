@@ -1,10 +1,72 @@
-var extensionId = "gnbajjiemcfbjfcbacpfdipbkobjnage";
+var extensionId = "lcijpemfldidhhnckoejhbaogdcjjjmp";
 
-var images = [];
+var imageStorage = {
+    db: null,
+    defaultImages: [],
+
+    setDefaultImages: function(images) {
+        this.defaultImages = images;
+    },
+
+    search: function(term, callback) {
+        this.searchDb(term, function(r) {
+            callback(this.defaultImages.filter(function(i) {
+                return term.indexOf(i.text) !== -1;
+            }).concat(r));
+        }.bind(this));
+    },
+
+    searchDb: function(term, callback) {
+        this.getDb(function(db) {
+            var transaction = db.transaction(['twitter-saved-media'], 'readonly');
+            var request = transaction.objectStore("twitter-saved-media").index('term').getAll(IDBKeyRange.only(term));
+            request.onsuccess = function(event) {
+                callback(event.target.result.map(function(item) {
+                    item.url = URL.createObjectURL(item.blob);
+                    return item;
+                }));
+            };
+        });
+    },
+
+    getDb: function(callback) {
+        // it is possible to have two instances of the requestdb, but unlikely... good enough
+        if (this.db) {
+            callback(this.db);
+        } else {
+            var requestdb = indexedDB.open("twitter-saved-media", '3');
+            requestdb.onerror = function (event) {
+                console.error("Error creating/accessing IndexedDB database");
+            };
+            requestdb.onsuccess = function (event) {
+                this.db = event.target.result;
+                callback(this.db);
+            }.bind(this);
+
+            requestdb.onupgradeneeded = function (event) {
+                var db = event.target.result;
+                var objectStore = db.createObjectStore("twitter-saved-media", {keyPath: 'id', autoIncrement: true});
+                objectStore.createIndex('term', 'term', { unique: false })
+            };
+        }
+    },
+
+    saveImage: function(blob, term, width, height) {
+        this.getDb(function(db) {
+            var transaction = db.transaction(['twitter-saved-media'], 'readwrite');
+            var put = transaction.objectStore("twitter-saved-media").put({
+                term: term,
+                blob: blob,
+                width: width,
+                height: height,
+            });
+        });
+    }
+};
+
 chrome.runtime.sendMessage(extensionId, {}, function(response) {
-    images = response;
+    imageStorage.setDefaultImages(response);
 });
-
 
 using("app/utils/file", function (file) {
     let f = file.getFileInfo;
@@ -20,7 +82,7 @@ using("app/utils/file", function (file) {
 $(document).on('uiMediaEditDialogDone', '#media-edit-dialog', function(e, f) {
     using("app/utils/shared_objects", function(sharedObjects) {
         var file = sharedObjects.get(f.fileId);
-        console.log(file.fileHandle, file.altText);
+        imageStorage.saveImage(file.fileHandle, file.altText, file.thumbnail.width, file.thumbnail.height);
     });
 });
 
@@ -36,9 +98,8 @@ $(document).on('dataFoundMediaSearchResults', '.FoundMediaSearch', function(e) {
     '</div>';
     var val = $(e.currentTarget).find('.FoundMediaSearch-queryInput').val().toLowerCase();
     var added = 0;
-    for (i in images) {
-        var item = images[i];
-        if (val.indexOf(item.text) !== -1) {
+    imageStorage.search(val, function(items) {
+        items.forEach(function(item) {
             if (added === 0 && $(e.currentTarget).find('.FoundMediaSearch-items .FoundMediaSearch-column').length === 0) {
                 $(e.currentTarget).find('.FoundMediaSearch-items').html('<div class="FoundMediaSearch-column"></div><div class="FoundMediaSearch-column"></div>');
             }
@@ -48,6 +109,6 @@ $(document).on('dataFoundMediaSearchResults', '.FoundMediaSearch', function(e) {
                     .replace(/{height}/g, item.height)
                     .replace(/{ratio}/g, (100 * item.height / item.width) + '%')
             );
-        }
-    }
+        });
+    });
 });
