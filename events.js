@@ -113,7 +113,7 @@ using("app/utils/file", function (file) {
             p.resolve(blobs[url]);
             return p;
         } else {
-            fetchAsBlob.call(this, url);
+            return fetchAsBlob.call(this, url);
         }
     };
 });
