@@ -41,8 +41,8 @@ var imageStorage = {
     },
 
     searchDb: function(term, callback) {
-        if (term === '#myimages') {
-            this.getAllFromDb(callback);
+        if (term === '#misimagenes') {
+            this.getAll(callback);
             return;
         };
         if (term[0] !== '#') {
@@ -158,10 +158,10 @@ $(document).on('dataFoundMediaSearchResults dataFoundMediaCategoryItems', '.Foun
 
 $(document).on('dataFoundMediaCategories dataFoundMediaSearchClear', '.FoundMediaSearch', function(e) {
     var html = '<div class="FoundMediaSearch-categoryContainer FoundMediaSearch-focusable FoundMediaSearch-itemContainer--bg6 js-presented FoundMediaSearch-slideIn">' +
-    '<button type="button" class="FoundMediaSearch-category" data-name="#myimages" data-display-name="#myimages" tabindex="-1">' +
+    '<button type="button" class="FoundMediaSearch-category" data-name="#misimagenes" data-display-name="#misimagenes" tabindex="-1">' +
     '<div class="FlexEmbed u-borderRadiusInherit" style="padding-bottom: 50%">' +
     '<div class="FlexEmbed-item u-borderRadiusInherit">' +
-    '<div class="FoundMediaSearch-categoryName">My Images</div>' +
+    '<div class="FoundMediaSearch-categoryName">Mis Imagenes</div>' +
     '</div>' +
     '</div>' +
     '</button>' +
